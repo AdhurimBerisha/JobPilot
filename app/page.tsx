@@ -1,3 +1,4 @@
+import ImageTabs from "@/components/image-tabs";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
@@ -27,6 +28,9 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        {/* Image Tabs */}
+        <ImageTabs />
       </main>
     </div>
   );
