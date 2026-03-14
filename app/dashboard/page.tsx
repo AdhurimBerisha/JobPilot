@@ -6,7 +6,7 @@ import KanbanBoard from "@/components/kaban-board";
 import { Suspense } from "react";
 
 async function getBoard(userId: string) {
-  // "use cache";
+  "use cache";
 
   await connectDB();
 
