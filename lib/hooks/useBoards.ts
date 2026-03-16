@@ -52,12 +52,24 @@ export function useBoard(initialBoard?: Board | null) {
         );
         if (targetColumnIndex !== -1) {
           const targetColumn = newColumns[targetColumnIndex];
+
+          // Determine status based on column name
+          const statusMap: Record<string, string> = {
+            "Wish List": "wish-list",
+            Applied: "applied",
+            Interviewing: "interviewing",
+            Offer: "offer",
+            Rejected: "rejected",
+          };
+          const newStatus = statusMap[targetColumn.name] || "applied";
+
           const currentJobs = targetColumn.jobApplications || [];
 
           const updatedJobs = [...currentJobs];
           updatedJobs.splice(newOrder, 0, {
             ...jobToMove,
             columnId: newColumnId,
+            status: newStatus,
             order: newOrder * 100,
           });
 

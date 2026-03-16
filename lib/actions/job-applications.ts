@@ -70,6 +70,16 @@ export async function createJobApplication(data: JobApplicationData) {
     .select("order")
     .lean()) as { order: number } | null;
 
+  // Determine status based on column name
+  const statusMap: Record<string, string> = {
+    "Wish List": "wish-list",
+    Applied: "applied",
+    Interviewing: "interviewing",
+    Offer: "offer",
+    Rejected: "rejected",
+  };
+  const status = statusMap[column.name] || "applied";
+
   const jobApplication = await JobApplication.create({
     company,
     position,
@@ -82,7 +92,7 @@ export async function createJobApplication(data: JobApplicationData) {
     userId: session.user.id,
     tags: tags || [],
     description,
-    status: "applied",
+    status,
     order: maxOrder ? maxOrder.order + 1 : 0,
   });
 
@@ -106,6 +116,7 @@ export async function updateJobApplication(
     jobUrl?: string;
     columnId?: string;
     order?: number;
+    status?: string;
     tags?: string[];
     description?: string;
   },
@@ -126,7 +137,7 @@ export async function updateJobApplication(
     return { error: "Unauthorized" };
   }
 
-  const { columnId, order, ...otherUpdates } = updates;
+  const { columnId, order, status, ...otherUpdates } = updates;
 
   const updatesToApply: Partial<{
     company: string;
@@ -137,6 +148,7 @@ export async function updateJobApplication(
     jobUrl: string;
     columnId: string;
     order: number;
+    status: string;
     tags: string[];
     description: string;
   }> = otherUpdates;
@@ -148,6 +160,20 @@ export async function updateJobApplication(
     newColumnId && newColumnId !== currentColumnId;
 
   if (isMovingToDifferentColumn) {
+    const newColumn = await Column.findById(newColumnId);
+    if (!newColumn) {
+      return { error: "New column not found" };
+    }
+
+    const statusMap: Record<string, string> = {
+      "Wish List": "wish-list",
+      Applied: "applied",
+      Interviewing: "interviewing",
+      Offer: "offer",
+      Rejected: "rejected",
+    };
+    const newStatus = statusMap[newColumn.name] || "applied";
+
     await Column.findByIdAndUpdate(currentColumnId, {
       $pull: { jobApplications: id },
     });
@@ -182,6 +208,7 @@ export async function updateJobApplication(
 
     updatesToApply.columnId = newColumnId;
     updatesToApply.order = newOrderValue;
+    updatesToApply.status = newStatus;
 
     await Column.findByIdAndUpdate(newColumnId, {
       $push: { jobApplications: id },
